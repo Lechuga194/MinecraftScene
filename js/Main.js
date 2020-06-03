@@ -10,10 +10,10 @@ import Vector3 from "./Vector3.js";
 import ImageLoader from "./ImageLoader.js";
 import Camera from "./Camera.js";
 import Skybox from "./Skybox.js";
-
 import PrismaRectangular from "./PrismaRectangular.js";
 
-let textures = [
+const path = "textures/";
+let files = [
   "bookshelf.png",
   "madera.png",
   "skybox.png",
@@ -30,6 +30,13 @@ let textures = [
   "creeper_body.png",
   "creeper_legs.png",
 ];
+
+let textures = files.map((item) => {
+  if (item == "skybox.png") {
+    return item;
+  }
+  return path + item;
+});
 
 //Desactiva el scroll en la pagina con las flechas de direccion
 window.addEventListener(
