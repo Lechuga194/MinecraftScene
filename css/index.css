@@ -1,0 +1,62 @@
+body{
+background-color: #000000;
+color: white;
+text-align: center;
+margin: 0;
+}
+
+h1{
+    animation: color-change 1s infinite;
+    text-align: center;
+    font-family: 'Bebas Neue', cursive;
+}
+
+h3{
+    text-align: center;
+    font-family: 'Open Sans', sans-serif;
+}
+
+input{
+    text-align: center;
+    border-radius: 80px;
+    border-style: none;
+    width: 45px;
+    background-color: rgb(96, 96, 122);
+    color: white
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+#container{
+    display: grid;
+}
+
+#controles{
+    margin: 0px 15px 0px 15px;
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    text-align: center;
+    justify-items: center;
+}
+
+canvas {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+    display: block;
+}
+
+.checkbox{
+    text-align: start;
+}

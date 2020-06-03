@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Proyecto Final | Graficación</title>
+  <script type="module" src="./js/Main.js"></script>
+  <link rel="stylesheet" type="text/css" href="./css/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <h1>Proyecto Final Graficación por Computadora 2020-2</h1>
+
+  <div id="container">
+
+    <canvas id="the_canvas" height="425"></canvas>
+
+    <div id="controles">
+      <div class="checkbox">
+        <h3>Controles y camaras</h3>
+        <input type="checkbox" id="ortogonal">
+        <label for="ortogonal">Vista Ortogonal (NOT)</label><br>
+        <input type="checkbox" id="cambiar_camara">
+        <label for="cambiar_camara">Cambiar a camara 2</label><br>
+        <input type="checkbox" id="luz">
+        <label for="luz">Encender Luz </label><br>
+      </div>
+
+      <div class="checkbox">
+        <h3>Animaciones</h3>
+        <input type="checkbox" id="animacion_luz">
+        <label for="animacion_luz">Animación luz</label><br>
+        <input type="checkbox" id="recorrido">
+        <label for="recorrido">Recorrido autónomo</label><br>
+      </div>
+
+
+      <div>
+        <h3>Luz direccional</h3>
+        <label for="luz_posX">Introduce la posicion de la luz X</label>
+        <input type="number" id="luz_posX" value="0"><br>
+        <label for="luz_posY">Introduce la posicion de la luz Y</label>
+        <input type="number" id="luz_posY" value="10"><br>
+        <label for="luz_posZ">Introduce la posicion de la luz Z</label>
+        <input type="number" id="luz_posZ" value="-50"><br>
+      </div>
+
+      <div>
+        <h3>Luz de reflector</h3>
+        <label for="reflector_luz_posX">Introduce la posicion de la luz X</label>
+        <input type="number" id="reflector_luz_posX" value="0"><br>
+        <label for="reflector_luz_posY">Introduce la posicion de la luz Y</label>
+        <input type="number" id="reflector_luz_posY" value="1"><br>
+        <label for="reflector_luz_posZ">Introduce la posicion de la luz Z</label>
+        <input type="number" id="reflector_luz_posZ" value="50"><br>
+      </div>
+    </div>
+  </div>
+
+
+  <p>Flechas de direccion | WASD | "p" u "o" para hacer un paneo | "z" para Zoom y "x" para alejar |
+    Pulsa "b" para ver el skybox desde fuera</p>
+
+
+  <!-- Programas para iluminacion difusa -->
+  <script id="difuse_2d-vertex-shader" type="vertex-shader">
+      precision mediump float;
+  
+      attribute vec4 a_position;
+      attribute vec4 a_color;
+      attribute vec3 a_normal;
+      
+      uniform mat4 u_PVM_matrix;
+      uniform mat4 u_VM_matrix;
+  
+      // se van a tener tres luces, por lo que se crea un arreglo para contenerlas
+      uniform vec3 u_light_position[3];
+  
+      varying vec3 v_position;
+      varying vec4 v_color;
+      varying vec3 v_normal;
+  
+      void main() {
+        v_position = vec3( u_VM_matrix * a_position );
+        v_normal = vec3( u_VM_matrix * vec4(a_normal, 0) );
+  
+        v_color = a_color;
+  
+        gl_Position = u_PVM_matrix * a_position;
+      }
+    </script>
+
+  <script id="difuse_2d-fragment-shader" type="fragment-shader">
+      precision mediump float;
+  
+      // se van a tener tres luces, por lo que se crea un arreglo para contenerlas
+      uniform vec3 u_light_position[3];
+  
+      varying vec3 v_position;
+      varying vec4 v_color;
+      varying vec3 v_normal;
+  
+      // se define la componente de la luz ambiental como un valor constante
+      vec3 ambient = vec3(0.01, 0.01, 0.01);
+  
+      void main() {
+        // se crea una variable que va a contener que tanto va a estar iluminada la geometría
+        float factor = 0.0;
+  
+        // se normaliza la normal de la cara que se está dibujando
+        vec3 fragment_normal = normalize(v_normal);
+  
+        // variable temporal que va a contener la dirección de una luz
+        vec3 to_light;
+        // variable temporal que va a contener el coseno del ángulo entre la dirección de una luz y la normal
+        float cos_angle;
+  
+        // se itera sobre cada una de las luces y se calcula su contribución, de la misma forma que se hacia antes
+        for (int i=0; i<3; i++) {
+          to_light = normalize( u_light_position[i] - v_position );
+          cos_angle = max(dot(fragment_normal, to_light), 0.0);
+          // se almacena el factor de iluminación de cada luz
+          factor += cos_angle;
+        }    
+  
+        gl_FragColor = vec4(ambient + vec3(v_color)*factor, v_color.a);
+      }
+    </script>
+
+  <!-- Programas para iluminacion especular -->
+  <script id="especular-2d-vertex-shader" type="vertex-shader">
+      precision mediump float;
+  
+      attribute vec4 a_position;
+      attribute vec4 a_color;
+      attribute vec3 a_normal;
+      
+      uniform mat4 u_PVM_matrix;
+      uniform mat4 u_VM_matrix; 
+  
+      //Posicion de la luz
+      uniform vec3 u_light_position;
+      // color de la luz
+      uniform vec3 u_light_color;
+      // brillo del objeto
+      uniform float u_shininess;
+      // color de la luz de ambiente
+      uniform vec3 u_ambient_color;
+  
+      varying vec3 v_position;
+      varying vec4 v_color;
+      varying vec3 v_normal;
+  
+      void main() {
+        v_position = vec3( u_VM_matrix * a_position );
+        v_normal = vec3( u_VM_matrix * vec4(a_normal, 0) );
+  
+        v_color = a_color;
+  
+        gl_Position = u_PVM_matrix * a_position;
+      }
+  </script>
+
+  <script id="especular-2d-fragment-shader" type="fragment-shader">
+      precision mediump float;
+  
+      // información de la luz
+      uniform vec3 u_light_position;
+      uniform vec3 u_light_color;
+      uniform vec3 u_ambient_color;
+      uniform float u_shininess;
+  
+      varying vec3 v_position;
+      varying vec4 v_color;
+      varying vec3 v_normal;
+  
+      uniform vec4 u_color;
+  
+      /**
+      * Función que devuelve el aporte de color de la luz ambiental sobre el objeto
+      */
+      vec3 getAmbientColor(vec3 u_ambient_color, vec3 v_color) {
+        return u_ambient_color * v_color;
+      }
+  
+      /**
+      * Función que calcula la reflexión difusa
+      */
+      vec3 getDiffuseColor(vec3 u_light_position, vec3 v_position, vec3 v_normal, vec4 v_color) {
+        vec3 to_light = normalize( u_light_position - v_position );
+        vec3 fragment_normal = normalize(v_normal);
+  
+        float cos_angle = dot(fragment_normal, to_light);
+        cos_angle = clamp(cos_angle, 0.0, 1.0);
+  
+        return vec3(v_color) * cos_angle;
+      }
+  
+      /**
+      * Función que calcula la reflexión especular
+      */
+      vec3 getSpecularColor(vec3 u_light_position, vec3 u_light_color, vec3 v_position, vec3 v_normal, vec4 v_color) {
+        vec3 to_light = normalize( u_light_position - v_position );
+        vec3 fragment_normal = normalize(v_normal);
+  
+        vec3 reflection = normalize( reflect(-to_light, fragment_normal) );	
+        vec3 to_camera = normalize( vec3(0,0,0) - v_position );
+  
+        float cos_angle = dot(reflection, to_camera);
+        cos_angle = clamp(cos_angle, 0.0, 1.0);
+        cos_angle = pow(cos_angle, u_shininess);
+  
+        vec3 specular_color = u_light_color * cos_angle;
+        vec3 object_color = vec3(v_color) * (1.0 - cos_angle);
+  
+        return specular_color;
+      }
+  
+      void main() {
+        vec3 to_light = normalize( u_light_position - v_position );
+  
+        vec3 fragment_normal = normalize(v_normal);
+  
+        float cos_angle = max(dot(fragment_normal, to_light), 0.0);
+  
+        // color ambiental
+        vec3 ambient_color = getAmbientColor(u_ambient_color, vec3(v_color));
+        // color difuso
+        vec3 diffuse_color = getDiffuseColor(u_light_position, v_position, v_normal, v_color);
+        // color especular
+        vec3 specular_color = getSpecularColor(u_light_position, u_light_color, v_position, v_normal, v_color);
+        
+        gl_FragColor = vec4((ambient_color + diffuse_color + specular_color), v_color.a);
+        //gl_FragColor = vec4(vec3(v_color) * cos_angle, v_color.a);
+      }
+  </script>
+
+  <!-- Programas para texturas -->
+  <script id="texture_2d-vertex-shader" type="vertex-shader">
+    precision mediump float;
+
+    attribute vec4 a_position;
+    attribute vec4 a_color;
+    attribute vec3 a_normal;
+
+    // variable donde se recibe la información del buffer de coordenadas de textura
+    attribute vec2 a_texcoord;
+    // variable para comunicar las coordenadas de textura entre el shader de vértices y el shader de fragmentos
+    varying vec2 v_texcoord;
+    
+    uniform mat4 u_PVM_matrix;
+    uniform mat4 u_VM_matrix;
+
+    // se van a tener tres luces, por lo que se crea un arreglo para contenerlas
+    uniform vec3 u_light_position[3];
+
+    varying vec3 v_position;
+    varying vec4 v_color;
+    varying vec3 v_normal;
+
+    void main() {
+      v_position = vec3( u_VM_matrix * a_position );
+      v_normal = vec3( u_VM_matrix * vec4(a_normal, 0) );
+
+      v_color = a_color;
+
+      gl_Position = u_PVM_matrix * a_position;
+      v_texcoord = a_texcoord;
+    }
+  </script>
+
+  <script id="texture_2d-fragment-shader" type="fragment-shader">
+    precision mediump float;
+
+    // se van a tener tres luces, por lo que se crea un arreglo para contenerlas
+    uniform vec3 u_light_position[3];
+
+    varying vec3 v_position;
+    varying vec4 v_color;
+    varying vec3 v_normal;
+
+    // se define la componente de la luz ambiental como un valor constante
+    vec3 ambient = vec3(0.01, 0.01, 0.01);
+
+    // variable donde se reciben las coordenadas de textura de los vértices que forman un polígono
+    varying vec2 v_texcoord;
+    // objeto que se encarga de obtener la información de color de los píxeles de la imagen
+    uniform sampler2D u_texture;
+    
+    void main() {
+      // se crea una variable que va a contener que tanto va a estar iluminada la geometría
+      float factor = 0.0;
+
+      // se normaliza la normal de la cara que se está dibujando
+      vec3 fragment_normal = normalize(v_normal);
+
+      // variable temporal que va a contener la dirección de una luz
+      vec3 to_light;
+      // variable temporal que va a contener el coseno del ángulo entre la dirección de una luz y la normal
+      float cos_angle;
+
+
+      // se itera sobre cada una de las luces y se calcula su contribución, de la misma forma que se hacia antes
+      for (int i=0; i<3; i++) {
+        to_light = normalize( u_light_position[i] - v_position );
+        cos_angle = max(dot(fragment_normal, to_light), 0.0);
+        // se almacena el factor de iluminación de cada luz
+        factor += cos_angle;
+      }    
+
+
+      //gl_FragColor = vec4(ambient + vec3(v_color)*factor, v_color.a); Dado que ahora usamos texturas
+      gl_FragColor = texture2D(u_texture, v_texcoord);
+    }
+  
+  </script>
+
+  <!-- Programas para iluminacion de reflector -->
+  <script id="reflector-vertex" type="vertex-shader">
+    precision mediump float;
+  
+    attribute vec4 a_position;
+    attribute vec4 a_color;
+    attribute vec3 a_normal;
+    
+    uniform mat4 u_PVM_matrix;
+    uniform mat4 u_VM_matrix;
+    uniform mat4 u_M_matrix;
+    
+    // para una luz de reflector se necesita una posición y una dirección
+    uniform vec3 u_light_position;
+    uniform vec3 u_light_direction;
+  
+    varying vec3 v_position;
+    varying vec4 v_color;
+    varying vec3 v_normal;
+  
+    void main() {
+      v_position = vec3( u_M_matrix * a_position );
+      v_normal = vec3( u_M_matrix * vec4(a_normal, 0) );
+  
+      v_color = a_color;
+  
+      gl_Position = u_PVM_matrix * a_position;
+    }
+  </script>
+
+  <script id="reflector-fragment" type="fragment-shader">
+    precision mediump float;
+  
+    uniform vec3 u_light_position;
+    uniform vec3 u_light_direction;
+  
+    varying vec3 v_position;
+    varying vec4 v_color;
+    varying vec3 v_normal;
+  
+    // el ángulo de apertura del reflector
+    float cut_off = 0.2;
+  
+    void main() {
+      vec3 to_light = normalize( u_light_position - v_position );
+  
+      vec3 fragment_normal = normalize(v_normal);
+  
+      // el ángulo que hay entre la dirección de la luz y la dirección de la luz a un vértice de la geometría
+      float theta = dot(to_light, -normalize(u_light_direction));
+  
+      // se determina si el fragmento se encuentra dentro o fuera del cono que determina la luz del reflector
+      float cos_angle;
+      if (theta > cut_off) {
+        cos_angle = max(dot(fragment_normal, to_light), 0.0);
+      }
+      else {
+        cos_angle = 0.0;
+      }
+  
+      //Color de luz verde
+      gl_FragColor = vec4(vec3(0.364, 0.584, 0.098) * cos_angle, v_color.a);
+    }
+  </script>
+
+</body>
+
+</html>
