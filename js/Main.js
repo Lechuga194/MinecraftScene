@@ -12,7 +12,7 @@ import Camera from "./Camera.js";
 import Skybox from "./Skybox.js";
 import PrismaRectangular from "./PrismaRectangular.js";
 
-const path = "https://lechuga194.github.io/MinecraftScene/textures/";
+const path = "./textures/";
 let files = [
   "bookshelf.png",
   "madera.png",
