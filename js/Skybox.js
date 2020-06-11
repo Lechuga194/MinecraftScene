@@ -80,15 +80,15 @@ export default class Skybox {
     // se activa la textura con la que se va a dibujar
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
-    // se envía la información de la posición de los vértices
-    gl.enableVertexAttribArray(this.shader_locations.positionAttribute);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.vertexAttribPointer(this.shader_locations.positionAttribute, 3, gl.FLOAT, false, 0, 0);
-
     // se envía la información de las coordenadas de textura
     gl.enableVertexAttribArray(this.shader_locations.texcoordAttribute);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.UVBuffer);
     gl.vertexAttribPointer(this.shader_locations.texcoordAttribute, 2, gl.FLOAT, false, 0, 0);
+
+    //Se activa el buffer de la posicion
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.vertexAttribPointer(this.shader_locations.positionAttribute, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(this.shader_locations.positionAttribute);
 
     // se envía la matriz de transformación modelo, vista, proyección
     let projectionViewModelMatrix = Matrix4.multiply(projectionMatrix, this.initial_transform);

@@ -466,11 +466,11 @@ window.addEventListener("load", function () {
 
       // Se construye la matrix de proyeccion ortogonal
       let projectionMatrix_ortogonal = Matrix4.ortho(
-        -30,
-        30,
-        -aspect,
-        aspect,
+        -1,
         1,
+        -2 / aspect,
+        2 / aspect,
+        -1000,
         20000
       );
 
@@ -482,6 +482,9 @@ window.addEventListener("load", function () {
 
       //Matriz especifica para el skybox
       let projectionViewMatrix_SKYBOX;
+
+      //Matriz para vista ortogonal
+      let projectionViewMatrix_ORTHO;
 
       ///////////////////////////////////////////Objetos 3D///////////////////////////////////////////////////////////////////////////////
 
@@ -843,7 +846,7 @@ window.addEventListener("load", function () {
         ), //Bloque de Hierro
       ];
 
-      //Modelos para el creeper (dejamos la posicion explicita para poder moverlo de forma mas facil)
+      //Modelos para el creeper
       let creeper_head = new PrismaRectangular(
         gl,
         [1, 0.2, 0.3, 1],
@@ -890,7 +893,22 @@ window.addEventListener("load", function () {
 
       ///////////////////////////////////////////Dibujado de figuras///////////////////////////////////////////////////////////////////////////////
       //Funcion que se encarga de dibujar las distintas figuras
+
+      let choiceProyection;
+
       function draw() {
+
+        projectionViewMatrix_ORTHO = Matrix4.multiply(
+          projectionMatrix_ortogonal,
+          camera.getMatrix()
+        );
+
+        if (!ortogonal.checked) {
+          choiceProyection = viewProjectionMatrix;
+        } else {
+          choiceProyection = projectionViewMatrix_ORTHO;
+        }
+
         //Activamos depth mask para dibujar los objetos opacos
         gl.depthMask(true);
 
@@ -912,7 +930,7 @@ window.addEventListener("load", function () {
             texture_shader_locations,
             lightPos,
             camera.getMatrix(),
-            viewProjectionMatrix,
+            choiceProyection,
             textura_bookshelf
           );
         });
@@ -923,7 +941,7 @@ window.addEventListener("load", function () {
             texture_shader_locations,
             lightPos,
             camera.getMatrix(),
-            viewProjectionMatrix,
+            choiceProyection,
             textura_obsidiana
           );
         });
@@ -933,7 +951,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_mesaEncantamientos
         );
         mesaEncantamientoLibro.drawTexture(
@@ -941,7 +959,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_libro
         );
         diamante.drawTexture(
@@ -949,7 +967,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_diamante
         );
         oro.drawTexture(
@@ -957,7 +975,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_oro
         );
         hierro.drawTexture(
@@ -965,7 +983,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_hierro
         );
         cama.drawTexture(
@@ -973,7 +991,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_bed
         );
         baseCama.drawTexture(
@@ -981,7 +999,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_madera
         );
         mesa.drawTexture(
@@ -989,7 +1007,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_mesa
         );
         cofre.drawTexture(
@@ -997,7 +1015,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_cofre
         );
 
@@ -1007,7 +1025,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_creeper_head
         );
         creeper_body.drawTexture(
@@ -1015,7 +1033,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_creeper_body
         );
         creeper_front_leg.drawTexture(
@@ -1023,7 +1041,7 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_creeper_legs
         );
         creeper_back_leg.drawTexture(
@@ -1031,16 +1049,20 @@ window.addEventListener("load", function () {
           texture_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix,
+          choiceProyection,
           textura_creeper_legs
         );
 
         //Dibujamos el skybox
-        projectionViewMatrix_SKYBOX = Matrix4.multiply(
-          projectionMatrix,
-          camera.getMatrix()
-        );
-        skybox.draw(gl, projectionViewMatrix_SKYBOX);
+        if (ortogonal.checked) {
+          skybox.draw(gl, projectionViewMatrix_SKYBOX);
+        } else {
+          projectionViewMatrix_SKYBOX = Matrix4.multiply(
+            projectionMatrix,
+            camera.getMatrix()
+          );
+          skybox.draw(gl, projectionViewMatrix_SKYBOX);
+        }
 
         /**** Cambiamos de programa y dibujamos los objetos con iluminacion especular****/
         gl.useProgram(especular_program);
@@ -1054,7 +1076,7 @@ window.addEventListener("load", function () {
             especular_shader_locations,
             lightPos,
             camera.getMatrix(),
-            viewProjectionMatrix
+            choiceProyection
           );
         });
 
@@ -1066,7 +1088,7 @@ window.addEventListener("load", function () {
             reflector_shader_locations,
             RlightPos,
             camera.getMatrix(),
-            viewProjectionMatrix,
+            choiceProyection,
             RlightDir
           );
         } else {
@@ -1075,7 +1097,7 @@ window.addEventListener("load", function () {
             especular_shader_locations,
             lightPos,
             camera.getMatrix(),
-            viewProjectionMatrix
+            choiceProyection
           );
         }
 
@@ -1089,7 +1111,7 @@ window.addEventListener("load", function () {
             difuse_shader_locations,
             lightPos,
             camera.getMatrix(),
-            viewProjectionMatrix
+            choiceProyection
           );
         });
 
@@ -1102,7 +1124,7 @@ window.addEventListener("load", function () {
           difuse_shader_locations,
           lightPos,
           camera.getMatrix(),
-          viewProjectionMatrix
+          choiceProyection
         );
       }
 
@@ -1112,11 +1134,6 @@ window.addEventListener("load", function () {
       //////////////////////////////////////////ANIMACION DE GEOMETRIA///////////////////////////////////////////////////////////////////
       /**
        * Funcion para animar los objetos 3d de la escena ANIMACIONES AUTOMATICAS
-       * newTransform = Matrix4.multiply(Matrix4.rotateX(-angle), currentTransform); //Gira como reloj (viendolo desde el lateral)
-       * newTransform = Matrix4.multiply(Matrix4.rotateY(-angle), currentTransform); //Gira como carro derrapando (piso)
-       * newTransform = Matrix4.multiply(Matrix4.rotateZ(-angle), currentTransform); //Gira como reloj (frente mio)
-       * newTransform = Matrix4.multiply(Matrix4.rotateY(angle), newTransform); //Esto para girar en multiples ejes y
-       * newTransform = Matrix4.multiply(Matrix4.rotateZ(angle), newTransform); //Esto para girar en multiples ejes z
        * @param {Objeto3D} obj
        * @param {Float} velocidad entre más grande el valor, la animacion sera más lenta
        * @param {String} axis "x","y","z"
@@ -1345,11 +1362,6 @@ window.addEventListener("load", function () {
         } else {
           projectionMatrix = projectionMatrix_perspective;
         }
-        viewProjectionMatrix = Matrix4.multiply(
-          projectionMatrix,
-          camera.getMatrix()
-        );
-        draw();
       });
 
       //Evento para cambiar la camara

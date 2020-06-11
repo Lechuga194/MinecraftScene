@@ -8,6 +8,8 @@ import Matrix4 from "./Matrix4.js";
 import Vector3 from "./Vector3.js";
 import Vector4 from "./Vector4.js";
 
+let ortogonal = document.getElementById("ortogonal");
+
 export default class PrismaRectangular {
   /**
    * @param {WebGLRenderingContext} gl
@@ -115,7 +117,6 @@ export default class PrismaRectangular {
    * @param {Matrix4} projectionMatrix // Manda la informacion de la matriz de proyeccion y vista
    */
   drawTexture(gl, shader_locations, lightPos, viewMatrix, projectionMatrix, texture) {
-
     // se activa la textura con la que se va a dibujar
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -129,29 +130,14 @@ export default class PrismaRectangular {
     gl.vertexAttribPointer(shader_locations.positionAttribute, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shader_locations.positionAttribute);
 
-    //Se activa el buffer para las normales
-    gl.enableVertexAttribArray(shader_locations.normalAttribute);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.vertexAttribPointer(shader_locations.normalAttribute, 3, gl.FLOAT, false, 0, 0);
-
     // se calcula la matriz de transformación de modelo, vista y proyección
     let viewModelMatrix = Matrix4.multiply(viewMatrix, this.initial_transform);
     gl.uniformMatrix4fv(shader_locations.VM_matrix, false, viewModelMatrix.toArray());
-
-    // se enviá la dirección de la luz
-    let auxLightPos = new Vector4(lightPos[0], lightPos[1], lightPos[2], lightPos[3])
-    let lightPosView = viewMatrix.multiplyVector(auxLightPos);
-    let lightPosViewArray = lightPosView.toArray();
-    gl.uniform3f(shader_locations.lightPosition, lightPosViewArray[0], lightPosViewArray[1], lightPosViewArray[2]);
-
-    // se envía la información de la matriz de transformación del modelo, vista y proyección
     let projectionViewModelMatrix = Matrix4.multiply(projectionMatrix, viewModelMatrix);
-    // let projectionViewModelMatrix = projectionMatrix; //Si dejamos esto así el objeto se queda pegado a la camara
     gl.uniformMatrix4fv(shader_locations.PVM_matrix, false, projectionViewModelMatrix.toArray());
 
     // se dibuja
     gl.drawArrays(gl.TRIANGLES, 0, this.num_elements);
-
   }
 
   drawMaterial(gl, shader_locations, lightPos, viewMatrix, projectionMatrix, lightDir) {
